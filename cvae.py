@@ -168,6 +168,7 @@ class EncoderRNN(nn.Module):
     def reparameterization(self, mean, logvar):
         std = torch.exp(0.5 * logvar)
         eps = torch.randn(1, 1, latent_size) # sample a gaussain noise from N(0, I)
+        eps = eps.to(device)
         z = mean + std*eps
         return z
 
@@ -210,12 +211,16 @@ def evaluate(encoder, decoder, input_string, tense, max_length=MAX_LENGTH):
         encoder_hidden = encoder.initHidden()
         encoder_cell = encoder.initHidden()
         c = torch.eye(4)[tense[0]].view(1, 1, -1)
+        c = c.to(device)
         encoder_hidden = torch.cat((encoder_hidden, c), 2)
-        encoder_cell = torch.cat((encoder_cell, torch.zeros(1,1,4)), 2)
+        pad = torch.zeros(1,1,4)
+        pad = pad.to(device)
+        encoder_cell = torch.cat((encoder_cell, pad), 2)
         encoder_output, encoder_hidden, encoder_cell, KL_loss = encoder(input_tensor, (encoder_hidden, encoder_cell))
 
         decoder_input = torch.tensor([[SOS_token]], device=device)  # SOS
         c = torch.eye(4)[tense[1]].view(1, 1, -1)
+        c = c.to(device)
         encoder_hidden = torch.cat((encoder_hidden, c), 2)
         decoder_hidden = (encoder_hidden, encoder_cell)
         decoded_words = []
@@ -272,8 +277,11 @@ def train(input_tensor, target_tensor, encoder, decoder, encoder_optimizer, deco
     encoder_hidden = encoder.initHidden()
     encoder_cell = encoder.initHidden()
     c = torch.eye(4)[tense].view(1, 1, -1)
+    c = c.to(device)
     encoder_hidden = torch.cat((encoder_hidden, c), 2)
-    encoder_cell = torch.cat((encoder_cell, torch.zeros(1,1,4)), 2)
+    pad = torch.zeros(1,1,4)
+    pad = pad.to(device)
+    encoder_cell = torch.cat((encoder_cell, pad), 2)
 
     encoder_optimizer.zero_grad()
     decoder_optimizer.zero_grad()
