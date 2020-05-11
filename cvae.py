@@ -97,7 +97,7 @@ the order should be : simple present, third person, present progressive, past
 def Gaussian_score(words):
     words_list = []
     score = 0
-    yourpath = '/content/Tense_Conversion/train.txt' #should be your directory of train.txt
+    yourpath = '/home/ubuntu/Tense_Conversion/train.txt' #should be your directory of train.txt
     with open(yourpath,'r') as fp:
         for line in fp:
             word = line.split(' ')
@@ -262,16 +262,16 @@ def evalTestdata(encoder, decoder):
     
     for i in range(len(Input)):
         output = evaluate(encoder, decoder, Input[i], tenses[i])
-        print('input: {}'.format(Input[i]))
-        print('target: {}'.format(Target[i]))
-        print('pred: {}'.format(output))
+        #print('input: {}'.format(Input[i]))
+        #print('target: {}'.format(Target[i]))
+        #print('pred: {}'.format(output))
         
         if len(output) != 0:
             score += compute_bleu(output, Target[i])
         else:
             score += compute_bleu('', Target[i]) # predict empty string
         
-        print('--------------------')
+        #print('--------------------')
     b_score = score/len(Input)
     score = 0
     if b_score>=0.4 and b_score<0.6:
@@ -325,8 +325,8 @@ def train(input_tensor, target_tensor, encoder, decoder, encoder_optimizer, deco
             if decoder_input.item() == EOS_token:
                 break
     
-    b = iters/300000
-    KL_weight = min(0.4, b)
+    b = iters/800000
+    KL_weight = min(0.25, b)
 
     '''
     b = iters%50000
@@ -396,7 +396,7 @@ def trainIters(encoder, decoder, n_iters, learning_rate=LR):
             print('%s (%d %d%%) %.4f %.4f %.4f %.4f' % (timeSince(start, iters / n_iters),
                                     iters, iters / n_iters * 100, print_loss_avg, print_KL_avg, bleu_score, gaussian_score))
             
-            if b + g > best_score:
+            if gaussian_score > best_score:
                 best_score = b + g
                 torch.save(encoder.state_dict(), 'encoder.pkl')
                 torch.save(decoder.state_dict(), 'decoder.pkl')
@@ -453,7 +453,7 @@ def generating_words(decoder):
         
         words.append(word)
     
-    print(words)
+    #print(words)
     score = 0
     g_score = Gaussian_score(words)
     if g_score >= 0.05 and g_score < 0.2:
@@ -469,7 +469,7 @@ def generating_words(decoder):
 
 encoder1 = EncoderRNN(vocab_size, hidden_size).to(device)
 decoder1 = DecoderRNN(hidden_size, vocab_size).to(device)
-trainIters(encoder1, decoder1, 400000)
-decoder = DecoderRNN(hidden_size, vocab_size).to(device)
-decoder.load_state_dict(torch.load('decoder.pkl'))
-generating_words(decoder)
+trainIters(encoder1, decoder1, 800000)
+#decoder = DecoderRNN(hidden_size, vocab_size).to(device)
+#decoder.load_state_dict(torch.load('decoder.pkl'))
+#generating_words(decoder)
